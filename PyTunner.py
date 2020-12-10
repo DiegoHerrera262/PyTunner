@@ -1,6 +1,5 @@
 import pyaudio
 import numpy as np
-import tkinter as tk
 import time
 from matplotlib import pyplot as plt
 from scipy.signal import find_peaks
@@ -256,63 +255,3 @@ class DataProcessor:
                 self.Proceed = False
             except:
                 raise Exception('Finised Demo')
-
-class TunnerGUI:
-
-    '''
-    Class for showing pitch and freq
-    in a window for tunning
-    '''
-
-    def __init__(self):
-        '''
-        Function for instatiating Tunner GUI
-        '''
-        # Elements of raw GUI
-        self.window = tk.Tk()
-        self.window.title('PyTunner')
-        self.Label = tk.Label(self.window,
-                              text = 'Main Freq. = 0.0')
-        # Element for measuring main frequency
-        self.FrecDetector = DataProcessor()
-        # Frequency key
-        self.x = np.linspace(0,self.FrecDetector.SAMP_RATE/2,\
-                            num=self.FrecDetector.CHUNK_SIZE//2)
-        # Capture ambient noise
-        self.FrecDetector.CaptureNoise()
-
-    def UpdateLabel(self):
-        '''
-        Update frequancy label
-        '''
-        # Determine maximum frequency
-        freq = self.x[self.FrecDetector.MainFreqsAudio()]
-        # Update label text
-        self.Label.config(text = 'Main Freq. = ' + str(freq) + ' Hz')
-        # Pack label
-        self.Label.after(100,self.UpdateLabel)
-
-    def RunTunner(self):
-        '''
-        Display and update window with
-        measured frequency
-        '''
-        self.Label.pack(anchor = 'center')
-        self.UpdateLabel
-        tk.mainloop()
-
-
-
-
-if __name__ == '__main__':
-
-    #DemoRecorder = DataProcessor()
-    #DemoRecorder.CaptureNoise()
-    #print('Finised Recording Noise...')
-    #for i in range(5):
-    #    print(1+i)
-    #    time.sleep(1)
-    #DemoRecorder.DemoLiveSpectrum()
-
-    MyTunner = TunnerGUI()
-    MyTunner.RunTunner()
