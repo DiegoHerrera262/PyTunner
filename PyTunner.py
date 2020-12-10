@@ -46,9 +46,6 @@ class DataProcessor:
                         rate=self.SAMP_RATE,\
                         input=True,
                         frames_per_buffer=self.CHUNK_SIZE)
-        self.window = tk.Tk()
-        self.window.title('Demo Main Freq.')
-        self.message = tk.Label(self.window)
 
     # Function for closing audio input
     def CloseMicrophone(self):
@@ -130,8 +127,8 @@ class DataProcessor:
         data = self.PowerSpectrumAudio()
         data = 1/np.max(data) * data
         # Compute peaks using scipy
-        mainfreqs, _ = find_peaks(data,height=0.7)
-        return self.SAMP_RATE/self.CHUNK_SIZE * mainfreqs
+        mainfreqs, _ = find_peaks(data,height=0.2,distance=10)
+        return mainfreqs[0]
 
 ################################################################################
 #                               DEMO FUNCTIONS                                 #
@@ -176,8 +173,8 @@ class DataProcessor:
         '''
         # Set matplotlib for fast update
         fig, ax = plt.subplots()
-        ax.set_ylim(0,2.0)
-        ax.set_xlim(0,7000)
+        ax.set_ylim(0,1.1)
+        ax.set_xlim(0,4000)
         ax.set_title('Demo of Live Audio Spectrum - Pulse Ctr + C to Exit')
         x = np.linspace(0,self.SAMP_RATE/2,num=self.CHUNK_SIZE//2)
         line, = ax.plot(x,np.random.rand(self.CHUNK_SIZE//2))
@@ -188,8 +185,10 @@ class DataProcessor:
                 # Compute FFT data
                 data = self.PowerSpectrumAudio()
                 data = 1/np.max(data) * data
+                peaks, _ = find_peaks(data,height=0.2,distance=10)
                 # Update data on graphics and plot
                 line.set_ydata(data)
+                print('Main Freq: '+str(x[peaks[0]])+' Hz')
                 fig.canvas.draw()
                 fig.canvas.flush_events()
                 plt.pause(0.015)
@@ -258,37 +257,62 @@ class DataProcessor:
             except:
                 raise Exception('Finised Demo')
 
-    # Function for demo Main Frequency
-    def DemoLiveMainFreq(self):
-        '''
-        Function For demonstrating computation
-        of fundamental frequency
-        '''
-        if self.Proceed:
-            try:
-                freqs = self.MainFreqsAudio()
-                self.message.configure(text='Main freq: '+str(freqs[0]))
-                self.message.after(1000,self.DemoLiveMainFreq)
-                self.window.mainloop()
-            except KeyboardInterrupt:
-                self.CloseMicrophone()
-                self.Proceed = False
-            except:
-                raise Exception('Finished Demo')
+class TunnerGUI:
 
+    '''
+    Class for showing pitch and freq
+    in a window for tunning
+    '''
+
+    def __init__(self):
+        '''
+        Function for instatiating Tunner GUI
+        '''
+        # Elements of raw GUI
+        self.window = tk.Tk()
+        self.window.title('PyTunner')
+        self.Label = tk.Label(self.window,
+                              text = 'Main Freq. = 0.0')
+        # Element for measuring main frequency
+        self.FrecDetector = DataProcessor()
+        # Frequency key
+        self.x = np.linspace(0,self.FrecDetector.SAMP_RATE/2,\
+                            num=self.FrecDetector.CHUNK_SIZE//2)
+        # Capture ambient noise
+        self.FrecDetector.CaptureNoise()
+
+    def UpdateLabel(self):
+        '''
+        Update frequancy label
+        '''
+        # Determine maximum frequency
+        freq = self.x[self.FrecDetector.MainFreqsAudio()]
+        # Update label text
+        self.Label.config(text = 'Main Freq. = ' + str(freq) + ' Hz')
+        # Pack label
+        self.Label.after(100,self.UpdateLabel)
+
+    def RunTunner(self):
+        '''
+        Display and update window with
+        measured frequency
+        '''
+        self.Label.pack(anchor = 'center')
+        self.UpdateLabel
+        tk.mainloop()
 
 
 
 
 if __name__ == '__main__':
 
-    DemoRecorder = DataProcessor()
-    DemoRecorder.CaptureNoise()
-    print('Finised Recording Noise...')
-    for i in range(5):
-        print(1+i)
-        time.sleep(1)
+    #DemoRecorder = DataProcessor()
+    #DemoRecorder.CaptureNoise()
+    #print('Finised Recording Noise...')
+    #for i in range(5):
+    #    print(1+i)
+    #    time.sleep(1)
     #DemoRecorder.DemoLiveSpectrum()
-    #print('Main Frequencies of signal: ',DemoRecorder.MainFreqsAudio())
-    #DemoRecorder.CloseMicrophone()
-    DemoRecorder.DemoLiveMainFreq()
+
+    MyTunner = TunnerGUI()
+    MyTunner.RunTunner()
