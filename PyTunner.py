@@ -16,7 +16,7 @@ class DataProcessor:
 ################################################################################
 
     # Parameters for reading audio
-    CHUNK_SIZE = 10*1024             # Number of samples in one data capture
+    CHUNK_SIZE = 4*1024             # Number of samples in one data capture
     AUDIO_FORMAT = pyaudio.paInt16      # Format of audio data
     NUM_CHANNELS = 1                    # Number of channels that read input
     SAMP_RATE = 44100                   # Sampling Rate
@@ -113,6 +113,7 @@ class DataProcessor:
         '''
         # Read Power Spectrum
         data = self.PowerSpectrumAudio()
+        data = 1/np.sum(np.absolute(data)) * data
         # It already contains abs, so only log and FT remain
         return np.abs(np.fft.ifft(np.log(data[:len(data)//2])))
 
@@ -172,7 +173,7 @@ class DataProcessor:
         '''
         # Set matplotlib for fast update
         fig, ax = plt.subplots()
-        ax.set_ylim(0,1.1)
+        ax.set_ylim(0,0.3)
         ax.set_xlim(0,4000)
         ax.set_title('Demo of Live Audio Spectrum - Pulse Ctr + C to Exit')
         x = np.linspace(0,self.SAMP_RATE/2,num=self.CHUNK_SIZE//2)
@@ -183,8 +184,8 @@ class DataProcessor:
             try:
                 # Compute FFT data
                 data = self.PowerSpectrumAudio()
-                data = 1/np.max(data) * data
-                peaks, _ = find_peaks(data,height=0.2,distance=10)
+                data = 1/np.sum(np.absolute(data)) * data
+                peaks, _ = find_peaks(data,height=0.4*np.max(data),distance=10)
                 # Update data on graphics and plot
                 line.set_ydata(data)
                 print('Main Freq: '+str(x[peaks[0]])+' Hz')
@@ -205,9 +206,9 @@ class DataProcessor:
         # Set matplotlib for fast update
         fig, ax = plt.subplots()
         ax.set_ylim(0,0.1)
-        ax.set_xlim(0,1000)
+        ax.set_xlim(0,self.CHUNK_SIZE/(self.SAMP_RATE*2))
         ax.set_title('Demo of Live Audio Cepstrum - Pulse Ctr + C to Exit')
-        x = 1 / np.linspace(0,self.CHUNK_SIZE/(self.SAMP_RATE*2),\
+        x = np.linspace(0,self.CHUNK_SIZE/(self.SAMP_RATE*2),\
                         num=self.CHUNK_SIZE//4)
         line, = ax.plot(x,np.random.rand(self.CHUNK_SIZE//4))
         # Set timer for live plot of waveform

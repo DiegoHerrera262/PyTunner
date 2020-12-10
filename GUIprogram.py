@@ -56,16 +56,6 @@ class TunnerGUI:
 
 
 if __name__ == '__main__':
-    # Create window of GUI
-    #window = Tk()
-    #window.title('Shitty App')
-    # Insert simple label & pack
-    #lbl = Label(window)
-    #lbl.pack()
-    # Start mainloop
-    #counter = 0
-    #Count(counter)
-    #window.mainloop()
 
     PitchApp = TunnerGUI()
     PitchApp.RunTunner()
