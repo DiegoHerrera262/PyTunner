@@ -8,6 +8,6 @@ from scipy.signal import find_peaks
 import PyTunner as Tunner
 
 FrecDetector = Tunner.DataProcessor()
-FrecDetector.CaptureNoise()
+# FrecDetector.CaptureNoise()
 
 FrecDetector.DemoLiveSpectrum()

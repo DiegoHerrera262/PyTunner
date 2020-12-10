@@ -22,7 +22,7 @@ class DataProcessor:
     SAMP_RATE = 44100                   # Sampling Rate
     PyAudioInterface = pyaudio.PyAudio()
     # Noise audio
-    NOISE = None
+    NOISE = np.zeros(4*1024)
     Proceed = True
 
 ################################################################################
@@ -91,7 +91,8 @@ class DataProcessor:
         data = data - np.mean(data) - self.NOISE
         # Compute FFT using numpy
         data_fft = np.fft.fft(data)
-        return 2/self.CHUNK_SIZE * np.abs(data_fft[:len(data)//2])
+        pws = 2/self.CHUNK_SIZE * np.abs(data_fft[:len(data)//2])
+        return 1/np.sum(np.abs(pws)) * pws
 
     def AutoCorrSpecAudio(self):
         '''
@@ -113,9 +114,8 @@ class DataProcessor:
         '''
         # Read Power Spectrum
         data = self.PowerSpectrumAudio()
-        data = 1/np.sum(np.absolute(data)) * data
         # It already contains abs, so only log and FT remain
-        return np.abs(np.fft.ifft(np.log(data[:len(data)//2])))
+        return np.abs(np.fft.fft(np.log(data[:len(data)//2])))
 
     # Compute principal frequencies of audio signal from Power spectrum
     def MainFreqsAudio(self):
@@ -184,11 +184,13 @@ class DataProcessor:
             try:
                 # Compute FFT data
                 data = self.PowerSpectrumAudio()
-                data = 1/np.sum(np.absolute(data)) * data
-                peaks, _ = find_peaks(data,height=0.4*np.max(data),distance=10)
+                peaks, _ = find_peaks(data,height=0.01,distance=10)
                 # Update data on graphics and plot
+                mfreq = np.mean(peaks[1:] - peaks[:-1])
+                mfreq = self.SAMP_RATE * (mfreq/self.CHUNK_SIZE)
                 line.set_ydata(data)
-                print('Main Freq: '+str(x[peaks[0]])+' Hz')
+                print('Main Freq: '+str(mfreq)+' Hz')
+                # print(peaks)
                 fig.canvas.draw()
                 fig.canvas.flush_events()
                 plt.pause(0.015)

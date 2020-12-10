@@ -8,6 +8,17 @@ from scipy.signal import find_peaks
 import tkinter as tk
 # Import Frequency detector
 import PyTunner as Tunner
+# Import Pnadas for reading tone frequencies
+import pandas as pd
+
+MusicalPitches = pd.read_csv('MusicalPitches.txt',sep='\t')
+
+def Freq2Note(f):
+    prefilter = MusicalPitches[MusicalPitches.Frequency <= f]
+    try:
+        return prefilter.iloc[-1]['Note']
+    except IndexError:
+        return '---'
 
 class TunnerGUI:
 
@@ -16,7 +27,7 @@ class TunnerGUI:
     in a window for tunning
     '''
 
-    def __init__(self):
+    def __init__(self,capture_noise = False):
         '''
         Function for instatiating Tunner GUI
         '''
@@ -31,7 +42,8 @@ class TunnerGUI:
         self.x = np.linspace(0,self.FrecDetector.SAMP_RATE/2,\
                             num=self.FrecDetector.CHUNK_SIZE//2)
         # Capture ambient noise
-        self.FrecDetector.CaptureNoise()
+        if capture_noise:
+            self.FrecDetector.CaptureNoise()
 
     def UpdateLabel(self):
         '''
@@ -39,9 +51,12 @@ class TunnerGUI:
         '''
         # Determine maximum frequency
         freq = self.x[self.FrecDetector.MainFreqsAudio()]
+        # Determine Note
+        note = Freq2Note(freq)
         # Update label text
         self.Label.config(\
-                        text = 'Main Freq. = ' + '{:6.2f}'.format(freq) + ' Hz')
+            text = 'Main Freq. = ' + '{:6.2f}'.format(freq) + ' Hz' + \
+            ' (' + note + ')')
         # Pack label
         self.Label.after(100,self.UpdateLabel)
 
@@ -53,7 +68,6 @@ class TunnerGUI:
         self.Label.pack(anchor = 'center')
         self.UpdateLabel()
         self.window.mainloop()
-
 
 if __name__ == '__main__':
 
